@@ -1,0 +1,1 @@
+Cookiecutter python package template
