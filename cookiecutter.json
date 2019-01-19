@@ -1,0 +1,8 @@
+{
+    "project_slug": "mypackage",
+    "package": "{{cookiecutter.project_slug}}",
+    "description" : "{{cookiecutter.package}} Package",
+    "author": "My Name",
+    "email": "name@email.com",
+    "_copy_without_render": ["*.cls", "*.html"]
+}
