@@ -1,0 +1,7 @@
+.ci
+.tox
+.venv
+build
+data
+docs
+tests

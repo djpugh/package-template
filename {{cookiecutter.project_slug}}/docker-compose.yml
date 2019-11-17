@@ -1,0 +1,6 @@
+version: '2.1'
+services:
+  {{cookiecutter.package}}:
+        image: {{cookiecutter.package}}:latest
+        ports:
+            - 8001:80

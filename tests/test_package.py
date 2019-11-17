@@ -17,7 +17,7 @@ def setUpModule():
     global CWD
     TEMPDIR = tempfile.TemporaryDirectory()
     os.chdir(TEMPDIR.name)
-    context = {'project_slug': 'testpackage'}
+    context = {'project_slug': 'testpackage', 'type': 'package'}
     print(ROOT_DIR)
     cookiecutter(ROOT_DIR, extra_context=context, no_input=True)
 
@@ -40,12 +40,25 @@ class TemplateTestCase(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join('testpackage', 'src')))
         self.assertTrue(os.path.exists(os.path.join('testpackage', 'src', 'testpackage')))
         self.assertTrue(os.path.exists(os.path.join('testpackage', 'src', 'testpackage', '__init__.py')))
+        self.assertFalse(os.path.exists(os.path.join('testpackage', 'src', 'testpackage', 'core.py')))
+        self.assertFalse(os.path.exists(os.path.join('testpackage', 'src', 'testpackage', 'server.py')))
         self.assertTrue(os.path.exists(os.path.join('testpackage', 'requirements.txt')))
         self.assertTrue(os.path.exists(os.path.join('testpackage', 'setup.cfg')))
         self.assertTrue(os.path.exists(os.path.join('testpackage', 'setup.py')))
         self.assertTrue(os.path.exists(os.path.join('testpackage', 'tox.ini')))
         self.assertTrue(os.path.exists(os.path.join('testpackage', '.gitignore')))
         self.assertTrue(os.path.exists(os.path.join('testpackage', 'README.rst')))
+        self.assertFalse(os.path.exists(os.path.join('testpackage', '.github', 'workflows', 'container-publish.yaml')))
+        self.assertTrue(os.path.exists(os.path.join('testpackage', '.github', 'workflows', 'lint-test.yaml')))
+        self.assertTrue(os.path.exists(os.path.join('testpackage', '.github', 'workflows', 'package-publish.yaml')))
+        self.assertTrue(os.path.exists(os.path.join('testpackage', '.github', 'workflows', 'pr-labeler.yaml')))
+        self.assertTrue(os.path.exists(os.path.join('testpackage', '.github', 'workflows', 'release-management.yaml')))
+        self.assertTrue(os.path.exists(os.path.join('testpackage', '.github', 'workflows', 'test-build.yaml')))
+        self.assertTrue(os.path.exists(os.path.join('testpackage', '.github', 'pr-labeler.yaml')))
+        self.assertTrue(os.path.exists(os.path.join('testpackage', '.github', 'release-drafter.yml')))
+        self.assertFalse(os.path.exists(os.path.join('testservice', 'DockerFile')))
+        self.assertFalse(os.path.exists(os.path.join('testservice', '.dockerignore')))
+        self.assertFalse(os.path.exists(os.path.join('testservice', 'docker-compose.yml')))
 
     def test_versioneer(self):
         self.assertTrue(os.path.exists(os.path.join('testpackage', 'versioneer.py')))

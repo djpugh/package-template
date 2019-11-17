@@ -4,5 +4,7 @@
     "description" : "{{cookiecutter.package}} Package",
     "author": "My Name",
     "email": "name@email.com",
-    "_copy_without_render": ["*.cls", "*.html"]
+    "type": ["package", "microservice"],
+    "_copy_without_render": ["*.cls", "*.html"],
+    "_version": "1.0.0"
 }
