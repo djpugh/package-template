@@ -5,6 +5,7 @@
     "author": "My Name",
     "email": "name@email.com",
     "type": ["package", "microservice"],
+    "url": "https://github.com/<owner>/<repo>",
     "_copy_without_render": ["*.cls", "*.html"],
     "_version": "1.0.0"
 }
