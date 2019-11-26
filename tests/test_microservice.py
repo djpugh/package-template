@@ -33,9 +33,6 @@ def tearDownModule():
 class TemplateTestCase(unittest.TestCase):
 
     def test_template_structure(self):
-        print(TEMPDIR)
-        print(CWD)
-        self.assertTrue(os.path.exists(os.path.join('testservice', '.ci')))
         self.assertTrue(os.path.exists(os.path.join('testservice', 'docs')))
         self.assertTrue(os.path.exists(os.path.join('testservice', 'src')))
         self.assertTrue(os.path.exists(os.path.join('testservice', 'src', 'testservice')))
