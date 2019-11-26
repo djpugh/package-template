@@ -19,7 +19,7 @@ if "microservice" != "{{cookiecutter.type}}":
     os.remove(Path('.')/'src'/'{{cookiecutter.package}}'/'server.py')
     os.remove(Path('.')/'.dockerignore')
     os.remove(Path('.') / 'docker-compose.yml')
-    os.remove(Path('.') / 'DockerFile')
+    os.remove(Path('.') / 'Dockerfile')
 if "package" != "{{cookiecutter.type}}":
     os.remove(Path('.')/'.github'/'workflows'/'package-publish.yaml')
 
