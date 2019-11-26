@@ -5,8 +5,9 @@ build
 *.csv
 *.pyd
 *.log
+!docs/
 docs/*
-!docs/source/*
+!docs/source/
 dist/*
 wheelhouse/*
 *.doctree
@@ -23,4 +24,3 @@ reports/*-py*
 .coverage
 reports/*
 *.c
-.cookiecutterkeep

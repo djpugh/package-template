@@ -1,12 +1,13 @@
 *.pyc
 *.nfs*
 *.egg-info
+!{{cookiecutter.project_slug}}/*
 build
 *.csv
 *.pyd
 *.log
-docs/*
 !docs/source/*
+docs/*
 dist/*
 wheelhouse/*
 *.doctree
@@ -23,4 +24,3 @@ reports/*-py*
 .coverage
 reports/*
 *.c
-.cookiecutterkeep

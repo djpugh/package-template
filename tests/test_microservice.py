@@ -56,7 +56,7 @@ class TemplateTestCase(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join('testservice', '.github', 'workflows', 'test-build.yaml')))
         self.assertTrue(os.path.exists(os.path.join('testservice', '.github', 'pr-labeler.yaml')))
         self.assertTrue(os.path.exists(os.path.join('testservice', '.github', 'release-drafter.yml')))
-        self.assertTrue(os.path.exists(os.path.join('testservice', 'DockerFile')))
+        self.assertTrue(os.path.exists(os.path.join('testservice', 'Dockerfile')))
         self.assertTrue(os.path.exists(os.path.join('testservice', '.dockerignore')))
         self.assertTrue(os.path.exists(os.path.join('testservice', 'docker-compose.yml')))
 
