@@ -1,3 +1,4 @@
+"""Provide the core FastAPI application."""
 from fastapi import FastAPI
 
 from {{cookiecutter.package}} import __version__
@@ -15,4 +16,3 @@ app = FastAPI(title='{{cookiecutter.package}}',
               openapi_url=f"/api/v{API_VERSION}/openapi.json",
               docs_url='/api/docs',
               redoc_url='/api/redoc')
-

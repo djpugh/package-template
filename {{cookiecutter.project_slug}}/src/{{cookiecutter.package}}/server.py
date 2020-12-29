@@ -1,3 +1,4 @@
+"""Run the fastapi app in a server."""
 import uvicorn
 
 from {{cookiecutter.package}}.core import app
