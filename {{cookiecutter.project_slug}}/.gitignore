@@ -6,8 +6,8 @@ build
 *.pyd
 *.log
 !docs/
-docs/*
 !docs/source/
+docs/*
 dist/*
 wheelhouse/*
 *.doctree
@@ -24,3 +24,5 @@ reports/*-py*
 .coverage
 reports/*
 *.c
+test-reports/*
+Pipfile

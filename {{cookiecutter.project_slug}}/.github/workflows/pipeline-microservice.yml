@@ -1,0 +1,341 @@
+{% raw %}
+name: Pipeline
+
+on:
+  workflow_dispatch:
+  push:
+    branches-ignore:
+      - gh-pages
+    tags-ignore:
+      - docs-*
+  pull_request:
+  release:
+    types: [published]
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install tox
+      - name: Lint
+        run: tox -e lint
+
+  security:
+    name: Security Lint
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install tox
+      - name: Lint with Bandit
+        run: tox -e security
+
+  types:
+    name: Check Types
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install tox
+      - name: Check Types
+        run: tox -e types
+
+  test:
+    name: Test Python ${{ matrix.py }} - ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu
+          - windows
+          - macos
+        py:
+          - 3.6
+          - 3.7
+          - 3.8
+          - 3.9
+      max-parallel: 4
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.py }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.py }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -U tox setuptools
+    - name: Setup Test Suite
+      run: tox -e test -vv --notest
+    - name: Run Test Suite
+      run: tox -e test --skip-pkg-install
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v1
+      with:
+        directory: ./reports/
+        flags: tests
+        name: ${{ matrix.py }} - ${{ matrix.os }}
+
+  sonarcloud:
+    name: SonarCloud
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  license-scan:
+    if: (github.event_name == 'pull_request' && contains(github.base_ref, 'main')) || (github.event_name == 'push' && (startsWith(github.ref, 'refs/tags') || endsWith(github.ref, 'main'))) || (github.event_name == 'release')
+
+    name: Scan Licenses
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Run FOSSA scan and upload build data
+        uses: fossa-contrib/fossa-action@v1
+        with:
+          fossa-api-key: ${{ secrets.FOSSA_API_KEY }}
+          github-token: ${{ github.token }}
+
+  codeql-analyze:
+    name: CodeQL Analyze
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    # Initializes the CodeQL tools for scanning.
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v1
+      with:
+        languages: python
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v1
+
+  build:
+    if: (github.event_name == 'pull_request' && contains(github.base_ref, 'main')) || (github.event_name == 'push' && (startsWith(github.ref, 'refs/tags') || endsWith(github.ref, 'main'))) || (github.event_name == 'release')
+    name: Build Container
+    runs-on: ${{ matrix.os }}-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        os:
+          - ubuntu
+        py:
+          - 3.8
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          clean: true
+      - name: Set up Python ${{ matrix.py }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.py }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install tox
+{% endraw %}
+      - name: Build {{cookiecutter.package}}
+{% raw %}
+        run: tox -e build-package -vvv
+
+      - name: Store build artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: build
+          path: |
+            dist/*
+
+      - name: Build Container
+        run: tox -e build-docker
+        env:
+          TAG: edge
+          SPHINX_GITHUB_CHANGELOG_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Save Container
+{% endraw %}
+        run: docker save {{cookiecutter.package}}:edge -o ./{{cookiecutter.package}}.edge.docker.tar.gz
+
+      - name: Store container
+        uses: actions/upload-artifact@v2
+        with:
+          name: container
+          path: ./{{cookiecutter.package}}.edge.docker.tar.gz
+{% raw %}
+
+  docs:
+    if: (github.event_name == 'pull_request' && contains(github.base_ref, 'main')) || (github.event_name == 'push' && (startsWith(github.ref, 'refs/tags') || endsWith(github.ref, 'main'))) || (github.event_name == 'release')
+    name: Build docs
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.py }}
+        uses: actions/setup-python@v2
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install tox
+
+      - name: Build docs
+        run: tox -e docs
+        env:
+          SPHINX_GITHUB_CHANGELOG_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Store build artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: docs
+          path: |
+            docs/html/*
+
+  automerge:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    needs:
+      - lint
+      - security
+      # - types
+      - test
+      - build
+      - license-scan
+      - codeql-analyze
+      - sonarcloud
+    steps:
+      - name: automerge
+        uses: "pascalgn/automerge-action@v0.12.0"
+        with:
+          args: "--trace"
+        env:
+          GITHUB_TOKEN: "${{ secrets.AUTOMERGE_TOKEN }}"
+          MERGE_LABELS: automerge,!nomerge
+          MERGE_FORKS: false
+          MERGE_DELETE_BRANCH: true
+
+  publish-container:
+    if: ((github.event_name == 'push' && endsWith(github.ref, 'main')) || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags')) || (github.event_name == 'release')) || ((github.event_name == 'pull_request') && endsWith(github.base_ref, 'main'))
+    name: Publish Container
+    runs-on: ubuntu-latest
+    needs:
+      - lint
+      - security
+      # - types
+      - test
+      - build
+      - sonarcloud
+      - license-scan
+      - codeql-analyze
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.py }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.py }}
+
+      - name: Download build
+        uses: actions/download-artifact@v2
+        with:
+          name: container
+          path: container
+{% endraw %}
+
+      - name: Load Container
+        run: |
+          docker load -i container/{{cookiecutter.package}}.edge.docker.tar.gz
+
+      - name: Get the version
+        id: get_version
+        run: echo ::set-output name=VERSION::$(python setup.py --version)
+
+      - name: Publish Edge
+        run: |
+          echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+          docker images
+          docker tag {{cookiecutter.package}}:edge $DOCKER_USERNAME/{{cookiecutter.package}}:edge
+          docker push $DOCKER_USERNAME/{{cookiecutter.package}}:edge
+{% raw %}
+        env:
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+
+{% endraw %}
+      - name: Publish Latest
+        run: |
+          echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+          docker images
+          docker tag {{cookiecutter.package}}:edge $DOCKER_USERNAME/{{cookiecutter.package}}:latest
+          docker push $DOCKER_USERNAME/{{cookiecutter.package}}:latest
+{% raw %}
+        env:
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        if: ((github.event_name == 'push' && endsWith(github.ref, 'main')) || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags')) || (github.event_name == 'release'))
+{% endraw %}
+      - name: Publish Tagged
+        run: |
+          echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+          docker images
+          docker tag {{cookiecutter.package}}:edge $DOCKER_USERNAME/{{cookiecutter.package}}:$TAG
+          docker push $DOCKER_USERNAME/{{cookiecutter.package}}:$TAG
+          docker tag {{cookiecutter.package}}:edge $DOCKER_USERNAME/{{cookiecutter.package}}:stable
+          docker push $DOCKER_USERNAME/{{cookiecutter.package}}:stable
+{% raw %}
+        env:
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          TAG: ${{ steps.get_version.outputs.VERSION }}
+        if: (startsWith(github.ref, 'refs/tags')) && ((github.event_name == 'push' && endsWith(github.ref, 'main')) || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags')) || (github.event_name == 'release'))
+
+  publish-docs:
+    if: (github.event_name == 'push' && startsWith(github.ref, 'refs/tags')  && !(contains(github.ref, 'gh-pages') || contains(github.ref, 'docs')) ) || (github.event_name == 'release')
+    name: Publish Docs
+    runs-on: ubuntu-latest
+    needs:
+      - docs
+      - publish-container
+    steps:
+      - name: Download docs
+        uses: actions/download-artifact@v2
+        with:
+          name: docs
+          path: ./docs/html
+      - name: Get Version
+        id: get_version
+        run: |
+          tag_name=$(echo ${{github.ref}} | cut -d/ -f3)
+          echo "::set-output name=tag_name::$tag_name"
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/html
+          tag_name: docs-${{ steps.get_version.outputs.tag_name }}
+          tag_message: 'Docs ${{ steps.get_version.outputs.tag_name }}'
+{% endraw %}

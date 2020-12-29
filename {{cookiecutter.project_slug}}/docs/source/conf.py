@@ -15,6 +15,8 @@
 import os
 import datetime as dt
 
+import sphinx_material
+
 
 from {{cookiecutter.package}} import __version__
 __author__ = '{{cookiecutter.author}}'
@@ -37,12 +39,22 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.intersphinx',
     'sphinx.ext.mathjax',
+    'sphinx.ext.extlinks',
     'sphinx.ext.todo',
     'sphinx.ext.ifconfig',
     'sphinx.ext.viewcode',
-    'release_changelog'
+    'sphinx_github_changelog',
+    'sphinx_material'
 ]
 
+extlinks = {
+    "issue": ("{{cookiecutter.url}}/issues/%s", "#"),
+    "pull": ("{{cookiecutter.url}}/pull/%s", "PR #"),
+    "github": ("https://github.com/%s", ''),
+    "user": ("https://github.com/%s", "@"),
+    "pypi": ("https://pypi.org/project/%s", ""),
+    "docker": ("https://hub.docker.com/%s", ""),
+}
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -89,10 +101,18 @@ default_role = ':any:'
 # If true, '()' will be appended to :func: etc. cross-reference text.
 #add_function_parentheses = True
 
+
 rst_epilog = """
 .. role:: latex(raw)
    :format: latex
+
+.. |github| image:: https://api.iconify.design/logos-github-icon.svg
+    :target: {{cookiecutter.url}}
+
+.. |docker| image:: https://api.iconify.design/mdi-docker.svg
+    :target: https://hub.docker.com/{{cookiecutter.user}}/{{cookiecutter.package}}
 """
+
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).
 #add_module_names = True
@@ -115,12 +135,6 @@ autoclass_content='both'
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
-
-if not on_rtd:  # only import and set the theme if we're building docs locally
-    import sphinx_rtd_theme
-    html_theme = 'sphinx_rtd_theme'
-    html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
@@ -143,6 +157,48 @@ if not on_rtd:  # only import and set the theme if we're building docs locally
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
 html_title = f'{project} documentation'
+
+html_theme = 'sphinx_material'
+html_theme_path = sphinx_material.html_theme_path()
+html_context = sphinx_material.get_html_context()
+# Material theme options (see theme.conf for more information)
+html_theme_options = {
+
+    # Set the name of the project to appear in the navigation.
+    'nav_title': html_title,
+
+    # Specify a base_url used to generate sitemap.xml. If not
+    # specified, then no sitemap will be built.
+    'base_url': '{{cookiecutter.docs_url}}',
+
+    # Set the repo location to get a badge with stats
+    'repo_url': '{{cookiecutter.url}}',
+    'repo_name': '{{cookiecutter.project_slug}}',
+
+    # Visible levels of the global TOC; -1 means unlimited
+    'globaltoc_depth': 1,
+    # If False, expand all TOC entries
+    'globaltoc_collapse': False,
+    # If True, show hidden TOC entries
+    'globaltoc_includehidden': False,
+    "logo_icon": "integrations_instructions",
+    "repo_type": "github",
+    # "globaltoc_depth": 2,
+    "color_primary": "blue",
+    "color_accent": "teal",
+    "touch_icon": "images/apple-icon-152x152.png",
+    "theme_color": "#2196f3",
+    "master_doc": False,
+    "nav_links": [
+    ],
+    "heroes": {
+        # "index": "{{cookiecutter.description}}",
+    },
+    "version_dropdown": False,
+}
+html_sidebars = {
+    "**": ["logo-text.html", "globaltoc.html", "localtoc.html", "searchbox.html"]
+}
 
 # A shorter title for the navigation bar.  Default is the same as html_title.
 #html_short_title = None
